@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  <style>
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      /*position: relative;*/
+    }
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    .info {
+      padding: 12px 16px;
+      font: 16px/18px Arial, Helvetica, sans-serif;
+      background: white;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 5px;
+    }
+    .info h4 {
+      margin: 0 0 5px;
+      color: #777;
+    }
+    .legend {
+      line-height: 18px;
+      color: #555;
+    }
+    .legend-entry {
+      margin-bottom: 4px;
+    }
+    .legend .legend-swatch {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+
+    .dislaimer {
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+
+</head>
+<body>
+
+<div id="info-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Disclaimer</h4>
+      </div>
+      <div class="modal-body">
+        <p><strong>Do not use this map as a source of official information.</strong> This map is currently a demonstration only. The regulations represented are not official. </p>
+        <p>For information regarding University Park parking regulations please contact the town office.</p>
+      </div>
+      <!-- <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div> -->
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+	<div id="map"></div>
+
+<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script>
+
+var map = L.map('map').setView([38.9719, -76.9435], 16);
+
+L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+function style(feature) {
+    return {
+        weight: feature.properties['stroke-width'],
+        opacity: feature.properties['stroke-opacity'],
+        color: feature.properties.stroke,
+    };
+}
+
+var gistUrl = 'https://gist.githubusercontent.com/danbjoseph/2047cb3f5bcad40bc6df/raw/fdcd8ed68021bcadf217a9320710c9d82a2d5f63/map.geojson';
+$.getJSON(gistUrl, function(data) {
+  var data = data
+  var regulations = L.geoJson(data, {style: style}).addTo(map);
+  map.fitBounds(regulations.getBounds());
+  var legend = L.control({position: 'bottomright'});
+  legend.onAdd = function (map) {
+      var div = L.DomUtil.create('div', 'info legend'),
+          categories = [];
+      div.innerHTML += '<h4>Regulation</h4>'
+      $.each(data.features, function(i, feature){
+        if($.inArray(feature.properties.parking, categories) === -1){
+          categories.push(feature.properties.parking);
+          div.innerHTML +=
+              '<div class="legend-entry"><i class="legend-swatch" style="background:' + feature.properties.stroke + '"></i> ' +
+              feature.properties.parking + '</div>';
+        }
+      });
+      div.innerHTML += '<div class="dislaimer" onclick="$(' + "'#info-modal'" + ').modal();"><i class="fa fa-info-circle"></i> disclaimer</div>';
+      return div;
+  };
+  legend.addTo(map);
+
+});
+
+</script>
+</body>
+</html>
